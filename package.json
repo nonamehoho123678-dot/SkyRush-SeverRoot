@@ -1,0 +1,15 @@
+{
+  "name": "skyrush-serveroot",
+  "version": "1.0.0",
+  "description": "SkyRush-SeverRoot Discord moderation and Auto Role bot",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "deploy": "node deploy-commands.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.26.5",
+    "dotenv": "^17.2.2",
+    "fs-extra": "^11.3.0"
+  }
+}
