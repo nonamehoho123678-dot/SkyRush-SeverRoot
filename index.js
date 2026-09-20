@@ -19,6 +19,52 @@ const client = new Client({
 
 const configPath = path.join(__dirname, "config.json");
 
+const C = {
+  reset: "\x1b[0m",
+  cyan: "\x1b[36m",
+  blue: "\x1b[34m",
+  green: "\x1b[32m",
+  yellow: "\x1b[33m",
+  red: "\x1b[31m",
+  magenta: "\x1b[35m",
+  white: "\x1b[37m",
+  gray: "\x1b[90m",
+  bold: "\x1b[1m"
+};
+
+function line(char = "═", width = 54) {
+  return char.repeat(width);
+}
+
+function logTime() {
+  return new Date().toLocaleTimeString("vi-VN", { hour12: false });
+}
+
+function logInfo(icon, message, color = C.cyan) {
+  console.log(color + "[" + logTime() + "] " + icon + " " + message + C.reset);
+}
+
+function showStartup(c) {
+  console.clear();
+
+  console.log(C.cyan + C.bold + "╔" + line() + "╗" + C.reset);
+  console.log(C.cyan + C.bold + "║" + "              ⚡ SKYRUSH-SERVEROOT ⚡              " + "║" + C.reset);
+  console.log(C.cyan + C.bold + "║" + "              Discord Management Bot              " + "║" + C.reset);
+  console.log(C.cyan + C.bold + "╠" + line() + "╣" + C.reset);
+  console.log(C.white + "║  🤖 Bot       : " + C.bold + c.user.tag.padEnd(35) + C.reset + C.white + "║" + C.reset);
+  console.log(C.white + "║  🟢 Status    : " + C.green + "ONLINE".padEnd(35) + C.reset + C.white + "║" + C.reset);
+  console.log(C.white + "║  🌐 Servers   : " + String(c.guilds.cache.size).padEnd(35) + "║" + C.reset);
+  console.log(C.white + "║  📡 Gateway   : " + C.green + "CONNECTED".padEnd(35) + C.reset + C.white + "║" + C.reset);
+  console.log(C.cyan + "╠" + line() + "╣" + C.reset);
+  console.log(C.magenta + "║  📋 COMMANDS                                         ║" + C.reset);
+  console.log(C.white + "║  !ban  !kick  !hanche  !bohanche                    ║" + C.reset);
+  console.log(C.white + "║  /xoa  /themrole  /xoarole  /autorole               ║" + C.reset);
+  console.log(C.cyan + "╚" + line() + "╝" + C.reset);
+  console.log("");
+  logInfo("✓", "Bot đã kết nối Discord", C.green);
+  logInfo("✓", "Đang hoạt động bình thường", C.green);
+}
+
 function loadConfig() {
   try {
     return JSON.parse(fs.readFileSync(configPath, "utf8"));
@@ -39,9 +85,14 @@ for (const name of ["xoa", "themrole", "xoarole", "autorole"]) {
   client.commands.set(name, require(path.join(__dirname, "commands", name + ".js")));
 }
 
-client.once("ready", c => {
-  console.log("SkyRush-SeverRoot online as " + c.user.tag);
-  console.log("Servers: " + c.guilds.cache.size);
+client.once("clientReady", showStartup);
+
+client.on("guildCreate", guild => {
+  logInfo("➕", "Bot đã vào server: " + guild.name, C.green);
+});
+
+client.on("guildDelete", guild => {
+  logInfo("➖", "Bot đã rời server: " + guild.name, C.yellow);
 });
 
 client.on("guildMemberAdd", async member => {
@@ -50,11 +101,15 @@ client.on("guildMemberAdd", async member => {
     if (!data?.enabled || !data.roleId) return;
 
     const role = member.guild.roles.cache.get(data.roleId);
-    if (!role || !role.editable) return;
+    if (!role || !role.editable) {
+      logInfo("⚠", "Không thể cấp Auto Role cho " + member.user.tag, C.yellow);
+      return;
+    }
 
     await member.roles.add(role, "SkyRush-SeverRoot Auto Role");
+    logInfo("🎭", "Auto Role → " + member.user.tag + " → " + role.name, C.green);
   } catch (error) {
-    console.error("Auto Role error:", error);
+    console.error(C.red + "Auto Role error:" + C.reset, error);
   }
 });
 
@@ -94,6 +149,7 @@ client.on("messageCreate", async message => {
       const reason = args.slice(1).join(" ") || "Không có lý do";
       if (!target.bannable) return message.reply("❌ Bot không thể ban thành viên này.");
       await target.ban({ reason });
+      logInfo("🔨", "BAN → " + target.user.tag + " | " + reason, C.red);
       return message.reply("🔨 Đã ban " + target.user.tag + ". Lý do: " + reason);
     }
 
@@ -101,6 +157,7 @@ client.on("messageCreate", async message => {
       const reason = args.slice(1).join(" ") || "Không có lý do";
       if (!target.kickable) return message.reply("❌ Bot không thể kick thành viên này.");
       await target.kick(reason);
+      logInfo("👢", "KICK → " + target.user.tag + " | " + reason, C.yellow);
       return message.reply("👢 Đã kick " + target.user.tag + ". Lý do: " + reason);
     }
 
@@ -114,6 +171,7 @@ client.on("messageCreate", async message => {
       if (!target.moderatable) return message.reply("❌ Bot không thể hạn chế thành viên này.");
 
       await target.timeout(duration, reason);
+      logInfo("🔇", "TIMEOUT → " + target.user.tag + " | " + args[1], C.yellow);
       return message.reply(
         "🔇 Đã hạn chế " + target.user.tag + " trong " + args[1] + ". Lý do: " + reason
       );
@@ -123,10 +181,11 @@ client.on("messageCreate", async message => {
       if (!target.moderatable) return message.reply("❌ Bot không thể bỏ hạn chế thành viên này.");
 
       await target.timeout(null, "Bỏ hạn chế bởi SkyRush-SeverRoot");
+      logInfo("🔊", "UNTOIMEOUT → " + target.user.tag, C.green);
       return message.reply("🔊 Đã bỏ hạn chế " + target.user.tag + ".");
     }
   } catch (error) {
-    console.error(error);
+    console.error(C.red + "Command error:" + C.reset, error);
     return message.reply("❌ Không thể thực hiện lệnh. Kiểm tra quyền của bot và thứ tự role.");
   }
 });
@@ -138,8 +197,9 @@ client.on("interactionCreate", async interaction => {
 
     try {
       await command.execute(interaction, { config, saveConfig });
+      logInfo("⚡", "SLASH → /" + interaction.commandName + " | " + interaction.user.tag, C.blue);
     } catch (error) {
-      console.error(error);
+      console.error(C.red + "Interaction error:" + C.reset, error);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({ content: "❌ Có lỗi xảy ra.", ephemeral: true });
       }
@@ -154,7 +214,7 @@ client.on("interactionCreate", async interaction => {
     try {
       await command.handleComponent(interaction, { config, saveConfig });
     } catch (error) {
-      console.error(error);
+      console.error(C.red + "Component error:" + C.reset, error);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({ content: "❌ Có lỗi xảy ra.", ephemeral: true });
       }
@@ -163,8 +223,19 @@ client.on("interactionCreate", async interaction => {
 });
 
 if (!process.env.DISCORD_TOKEN) {
-  console.error("❌ Thiếu DISCORD_TOKEN trong file .env");
+  console.error(C.red + "❌ Thiếu DISCORD_TOKEN trong file .env" + C.reset);
   process.exit(1);
 }
 
-client.login(process.env.DISCORD_TOKEN);
+process.on("unhandledRejection", error => {
+  console.error(C.red + "❌ Unhandled Rejection:" + C.reset, error);
+});
+
+process.on("uncaughtException", error => {
+  console.error(C.red + "❌ Uncaught Exception:" + C.reset, error);
+});
+
+client.login(process.env.DISCORD_TOKEN).catch(error => {
+  console.error(C.red + "❌ Không thể đăng nhập Discord:" + C.reset, error.message);
+  process.exit(1);
+});
