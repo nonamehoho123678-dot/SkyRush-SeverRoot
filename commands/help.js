@@ -17,7 +17,7 @@ function getHelpText() {
     "`!nhatu role @role #kenh 3` → chọn role, kênh và số lần cần !laudon.",
     "`!nhatu tao #kenh 3` → bot tự tạo role nhà tù.",
     "`!nhatu info` → xem cấu hình.",
-    "`!phattu @user [lý do]` → tống thành viên vào nhà tù.",
+    "`!phattu @user [số lần lao động] [lý do]` → tống thành viên vào nhà tù.",
     "`!laudon` → lao động để giảm án.",
     "",
     "**🎭 Auto Role**",
