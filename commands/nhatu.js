@@ -15,10 +15,11 @@ module.exports = {
   async execute(interaction, { config, saveConfig }) {
     const jail = getJailConfig(config, interaction.guild.id); const sub = interaction.options.getSubcommand();
     if (sub === "info") { const role = jail.roleId ? interaction.guild.roles.cache.get(jail.roleId) : null; const channel = jail.channelId ? interaction.guild.channels.cache.get(jail.channelId) : null; return interaction.reply({ content: "⛓️ **Cấu hình Nhà tù**\n🎭 Role: " + (role || "Chưa chọn") + "\n🔒 Kênh: " + (channel || "Chưa chọn") + "\n⛏️ Số lần !laudon mặc định: **" + (jail.requiredEscapes || 3) + "**", ephemeral: true }); }
+    await interaction.deferReply({ flags: 64 });
     const roleOption = interaction.options.getRole("role"); const channel = interaction.options.getChannel("kenh"); const required = interaction.options.getInteger("so_lan") || 3;
     let role = roleOption; if (!role) role = await interaction.guild.roles.create({ name: "⛓️ Tù nhân", permissions: [], reason: "SkyRush-SeverRoot Nhà tù" });
-    if (!role.editable) return interaction.reply({ content: "❌ Bot không thể quản lý role này. Hãy kéo role bot lên cao hơn role nhà tù.", ephemeral: true });
+    if (!role.editable) return interaction.editReply({ content: "❌ Bot không thể quản lý role này. Hãy kéo role bot lên cao hơn role nhà tù." });
     jail.roleId = role.id; jail.channelId = channel.id; jail.requiredEscapes = required; jail.prisoners ||= {}; await setup(interaction.guild, role, channel); saveConfig(config);
-    return interaction.reply({ content: "✅ **Đã thiết lập Nhà tù!**\n🎭 Role: " + role + "\n🔒 Kênh: " + channel + "\n⛏️ Số lần !laudon mặc định: **" + required + "**\n" + (!roleOption ? "🆕 Đã tạo role `⛓️ Tù nhân`.\n" : "") + "Dùng `/nhatu info` để xem lại.", ephemeral: true });
+    return interaction.editReply({ content: "✅ **Đã thiết lập Nhà tù!**\n🎭 Role: " + role + "\n🔒 Kênh: " + channel + "\n⛏️ Số lần !laudon mặc định: **" + required + "**\n" + (!roleOption ? "🆕 Đã tạo role `⛓️ Tù nhân`.\n" : "") + "Dùng `/nhatu info` để xem lại." });
   }
 };
