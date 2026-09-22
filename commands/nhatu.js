@@ -10,7 +10,7 @@ async function setup(guild, role, channel) {
 }
 module.exports = {
   data: new SlashCommandBuilder().setName("nhatu").setDescription("Cấu hình nhà tù").setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-    .addSubcommand(s => s.setName("setup").setDescription("Thiết lập nhà tù").addRoleOption(o => o.setName("role").setDescription("Role tù nhân; bỏ trống để tự tạo").setRequired(false)).addChannelOption(o => o.setName("kenh").setDescription("Kênh nhà tù").addChannelTypes(ChannelType.GuildText).setRequired(true)).addIntegerOption(o => o.setName("so_lan").setDescription("Số lần !laudon mặc định").setMinValue(1).setMaxValue(100).setRequired(false)))
+    .addSubcommand(s => s.setName("setup").setDescription("Thiết lập nhà tù").addChannelOption(o => o.setName("kenh").setDescription("Kênh nhà tù").addChannelTypes(ChannelType.GuildText).setRequired(true)).addRoleOption(o => o.setName("role").setDescription("Role tù nhân; bỏ trống để tự tạo").setRequired(false)).addIntegerOption(o => o.setName("so_lan").setDescription("Số lần !laudon mặc định").setMinValue(1).setMaxValue(100).setRequired(false)))
     .addSubcommand(s => s.setName("info").setDescription("Xem cấu hình nhà tù")),
   async execute(interaction, { config, saveConfig }) {
     const jail = getJailConfig(config, interaction.guild.id); const sub = interaction.options.getSubcommand();
