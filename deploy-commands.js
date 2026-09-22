@@ -6,7 +6,8 @@ const commands = [
   require("./commands/themrole").data,
   require("./commands/xoarole").data,
   require("./commands/autorole").data,
-  require("./commands/help").data
+  require("./commands/help").data,
+  require("./commands/nhatu").data
 ];
 
 if (!process.env.DISCORD_TOKEN || !process.env.CLIENT_ID) {
