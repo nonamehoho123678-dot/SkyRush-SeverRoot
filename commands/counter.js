@@ -183,7 +183,7 @@ module.exports = {
 
       return interaction.update({
         embeds: [getPanel(interaction.guild, data)],
-        components: getButtons()
+        components: getComponents()
       });
     }
 
@@ -193,7 +193,7 @@ module.exports = {
 
       return interaction.update({
         embeds: [getPanel(interaction.guild, data)],
-        components: getButtons()
+        components: getComponents()
       });
     }
 
@@ -209,7 +209,7 @@ module.exports = {
 
       return interaction.update({
         embeds: [getPanel(interaction.guild, data)],
-        components: getButtons()
+        components: getComponents()
       });
     }
   },
