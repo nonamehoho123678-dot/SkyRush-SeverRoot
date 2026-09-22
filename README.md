@@ -20,11 +20,11 @@ Dùng một trong hai cách:
 
 - Dùng role nhà tù có sẵn.
 - `#kenh` là kênh người bị tù được phép vào.
-- `3` là số lần cần dùng `!laudon` để được ra.
+- 
 
 Hoặc:
 
-`!nhatu tao #kenh 3`
+`!nhatu tao #kenh`
 
 Bot sẽ tự tạo role `⛓️ Tù nhân`.
 
@@ -34,7 +34,7 @@ Xem cấu hình:
 
 ### Tống tù
 
-`!phattu @user [lý do]`
+`!phattu @user [số lần lao động] [lý do]`
 
 Bot sẽ:
 - Lưu các role hiện tại của thành viên.
