@@ -82,11 +82,11 @@ const config = loadConfig();
 
 client.commands = new Collection();
 
-for (const name of ["xoa", "themrole", "xoarole", "autorole", "help", "nhatu"]) {
+for (const name of ["xoa", "themrole", "xoarole", "autorole", "help", "nhatu", "counter"]) {
   client.commands.set(name, require(path.join(__dirname, "commands", name + ".js")));
 }
 
-client.once("clientReady", showStartup);
+client.once("clientReady", async () => {\n  showStartup(client);\n  for (const guild of client.guilds.cache.values()) {\n    try {\n      await client.commands.get("counter")?.updateCounter(guild, config);\n    } catch (error) {\n      console.error(C.red + "Counter startup error:" + C.reset, error);\n    }\n  }\n});
 
 client.on("guildCreate", guild => {
   logInfo("➕", "Bot đã vào server: " + guild.name, C.green);
@@ -262,7 +262,7 @@ client.on("interactionCreate", async interaction => {
     if (!command?.handleComponent) return;
 
     try {
-      await command.handleComponent(interaction, { config, saveConfig });
+      await componentCommand.handleComponent(interaction, { config, saveConfig });
     } catch (error) {
       console.error(C.red + "Component error:" + C.reset, error);
       if (!interaction.replied && !interaction.deferred) {
