@@ -82,7 +82,7 @@ const config = loadConfig();
 
 client.commands = new Collection();
 
-for (const name of ["xoa", "themrole", "xoarole", "autorole"]) {
+for (const name of ["xoa", "themrole", "xoarole", "autorole", "help"]) {
   client.commands.set(name, require(path.join(__dirname, "commands", name + ".js")));
 }
 
