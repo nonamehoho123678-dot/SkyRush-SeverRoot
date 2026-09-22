@@ -256,7 +256,6 @@ client.on("interactionCreate", async interaction => {
     if (!command) return;
 
     try {
-      await interaction.deferReply({ flags: 64 });
       await command.execute(interaction, { config, saveConfig });
       logInfo("⚡", "SLASH → /" + interaction.commandName + " | " + interaction.user.tag, C.blue);
     } catch (error) {
