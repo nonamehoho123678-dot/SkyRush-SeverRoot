@@ -99,16 +99,17 @@ client.on("guildDelete", guild => {
 client.on("guildMemberAdd", async member => {
   try {
     const data = config.autorole[member.guild.id];
-    if (!data?.enabled || !data.roleId) return;
-
-    const role = member.guild.roles.cache.get(data.roleId);
-    if (!role || !role.editable) {
-      logInfo("⚠", "Không thể cấp Auto Role cho " + member.user.tag, C.yellow);
-      return;
+    if (data?.enabled && data.roleId) {
+      const role = member.guild.roles.cache.get(data.roleId);
+      if (!role || !role.editable) {
+        logInfo("⚠", "Không thể cấp Auto Role cho " + member.user.tag, C.yellow);
+      } else {
+        await member.roles.add(role, "SkyRush-SeverRoot Auto Role");
+        logInfo("🎭", "Auto Role → " + member.user.tag + " → " + role.name, C.green);
+      }
     }
 
-    await member.roles.add(role, "SkyRush-SeverRoot Auto Role");
-    logInfo("🎭", "Auto Role → " + member.user.tag + " → " + role.name, C.green);
+    await client.commands.get("counter")?.updateCounter(member.guild, config);
   } catch (error) {
     console.error(C.red + "Auto Role error:" + C.reset, error);
   }
@@ -259,7 +260,9 @@ client.on("interactionCreate", async interaction => {
 
   if (interaction.isButton() || interaction.isRoleSelectMenu()) {
     const command = client.commands.get("autorole");
-    if (!command?.handleComponent) return;
+    const counter = client.commands.get("counter");
+    const componentCommand = interaction.customId?.startsWith("counter_") ? counter : command;
+    if (!componentCommand?.handleComponent) return;
 
     try {
       await componentCommand.handleComponent(interaction, { config, saveConfig });
