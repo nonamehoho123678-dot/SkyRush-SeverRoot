@@ -57,7 +57,8 @@ function showStartup(c) {
   console.log(C.white + "║  📡 Gateway   : " + C.green + "CONNECTED".padEnd(35) + C.reset + C.white + "║" + C.reset);
   console.log(C.cyan + "╠" + line() + "╣" + C.reset);
   console.log(C.magenta + "║  📋 COMMANDS                                         ║" + C.reset);
-  console.log(C.white + "║  !ban  !kick  !hanche  !bohanche                    ║" + C.reset);
+  console.log(C.white + "║  !help  !ban  !kick  !hanche  !bohanche              ║" + C.reset);
+  console.log(C.white + "║  !nhatu  !phattu  !laudon                            ║" + C.reset);
   console.log(C.white + "║  /xoa  /themrole  /xoarole  /autorole               ║" + C.reset);
   console.log(C.cyan + "╚" + line() + "╝" + C.reset);
   console.log("");
@@ -112,6 +113,69 @@ client.on("guildMemberAdd", async member => {
     console.error(C.red + "Auto Role error:" + C.reset, error);
   }
 });
+
+
+
+async function setupJailRolePermissions(guild, jailRole, jailChannel) {
+  const channels = guild.channels.cache.filter(channel =>
+    channel.isTextBased() && !channel.isThread()
+  );
+
+  for (const channel of channels.values()) {
+    if (!channel.manageable) continue;
+
+    if (channel.id === jailChannel.id) {
+      await channel.permissionOverwrites.edit(jailRole, {
+        ViewChannel: true,
+        SendMessages: true,
+        ReadMessageHistory: true
+      }, { reason: "SkyRush-SeverRoot Nhà tù" });
+    } else {
+      await channel.permissionOverwrites.edit(jailRole, {
+        ViewChannel: false,
+        SendMessages: false
+      }, { reason: "SkyRush-SeverRoot Nhà tù" });
+    }
+  }
+}
+
+function getJailConfig(guildId) {
+  if (!config.jail) config.jail = {};
+  if (!config.jail[guildId]) {
+    config.jail[guildId] = {
+      roleId: null,
+      channelId: null,
+      requiredEscapes: 3,
+      prisoners: {}
+    };
+  }
+  return config.jail[guildId];
+}
+
+function getHelpText() {
+  return [
+    "⚡ **SkyRush-SeverRoot — Trợ giúp**",
+    "",
+    "**🛡️ Quản trị**",
+    "`!ban @user [lý do]`",
+    "`!kick @user [lý do]`",
+    "`!hanche @user [10s/5m/2h/1d] [lý do]`",
+    "`!bohanche @user`",
+    "`!xoa` là slash command: `/xoa [so_luong]`",
+    "",
+    "**⛓️ Nhà tù**",
+    "`!nhatu role @role #kenh 3` → chọn role nhà tù, kênh và số lần cần !laudon.",
+    "`!nhatu tao #kenh 3` → bot tự tạo role nhà tù.",
+    "`!nhatu info` → xem cấu hình.",
+    "`!phattu @user [lý do]` → tống thành viên vào nhà tù.",
+    "`!laudon` → người bị tù dùng để tăng số lần lao động.",
+    "",
+    "**🎭 Auto Role**",
+    "`/autorole` → mở bảng điều khiển Auto Role.",
+    "",
+    "ℹ️ Các lệnh quản trị cần quyền Administrator. Nhà tù cần Manage Roles + Manage Channels."
+  ].join("\\n");
+}
 
 function parseDuration(input) {
   const match = /^(\d+)(s|m|h|d)$/i.exec(String(input || ""));
