@@ -252,6 +252,7 @@ client.on("messageCreate", async message => {
 });
 client.on("interactionCreate", async interaction => {
   if (interaction.isChatInputCommand()) {
+    if (interaction.replied || interaction.deferred) return;
     const command = client.commands.get(interaction.commandName);
     if (!command) return;
 
@@ -273,7 +274,8 @@ client.on("interactionCreate", async interaction => {
     return;
   }
 
-  if (interaction.isButton() || interaction.isRoleSelectMenu()) {
+  if (interaction.isButton() || interaction.isRoleSelectMenu() || interaction.isChannelSelectMenu()) {
+    if (interaction.replied || interaction.deferred) return;
     const command = client.commands.get("autorole");
     const counter = client.commands.get("counter");
     const componentCommand = interaction.customId?.startsWith("counter_") ? counter : command;
