@@ -5,7 +5,8 @@ const commands = [
   require("./commands/xoa").data,
   require("./commands/themrole").data,
   require("./commands/xoarole").data,
-  require("./commands/autorole").data
+  require("./commands/autorole").data,
+  require("./commands/help").data
 ];
 
 if (!process.env.DISCORD_TOKEN || !process.env.CLIENT_ID) {
