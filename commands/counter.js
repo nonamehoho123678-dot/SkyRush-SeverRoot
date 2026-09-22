@@ -5,7 +5,8 @@ const {
   ButtonBuilder,
   ButtonStyle,
   PermissionFlagsBits,
-  ChannelType
+  ChannelType,
+  ChannelSelectMenuBuilder
 } = require("discord.js");
 
 function getData(config, guildId) {
@@ -23,7 +24,7 @@ function getPanel(guild, data) {
 
   return new EmbedBuilder()
     .setTitle("📊 SkyRush-SeverRoot | Member Counter")
-    .setDescription("Quản lý bộ đếm thành viên bằng các nút bên dưới.")
+    .setDescription("Chọn kênh Voice bên dưới để làm bộ đếm. Tên kênh sẽ tự động hiển thị số member hiện tại.")
     .addFields(
       {
         name: "Trạng thái",
@@ -45,8 +46,16 @@ function getPanel(guild, data) {
     .setTimestamp();
 }
 
-function getButtons() {
+function getComponents() {
   return [
+    new ActionRowBuilder().addComponents(
+      new ChannelSelectMenuBuilder()
+        .setCustomId("counter_channel")
+        .setPlaceholder("🎯 Chọn kênh Voice để hiển thị số member")
+        .setChannelTypes(ChannelType.GuildVoice)
+        .setMinValues(1)
+        .setMaxValues(1)
+    ),
     new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId("counter_setup")
@@ -97,7 +106,7 @@ module.exports = {
 
     await interaction.reply({
       embeds: [getPanel(interaction.guild, data)],
-      components: getButtons()
+      components: getComponents()
     });
   },
 
@@ -110,6 +119,24 @@ module.exports = {
     }
 
     const data = getData(config, interaction.guild.id);
+
+    if (interaction.customId === "counter_channel") {
+      const channelId = interaction.values?.[0];
+      const channel = interaction.guild.channels.cache.get(channelId);
+      if (!channel || channel.type !== ChannelType.GuildVoice) {
+        return interaction.reply({ content: "❌ Hãy chọn một kênh Voice.", ephemeral: true });
+      }
+
+      data.channelId = channel.id;
+      data.enabled = true;
+      saveConfig(config);
+      await updateCounter(interaction.guild, config);
+
+      return interaction.update({
+        embeds: [getPanel(interaction.guild, data)],
+        components: getComponents()
+      });
+    }
 
     if (interaction.customId === "counter_setup") {
       let channel = data.channelId
