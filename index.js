@@ -57,8 +57,8 @@ function showStartup(c) {
   console.log(C.white + "║  📡 Gateway   : " + C.green + "CONNECTED".padEnd(35) + C.reset + C.white + "║" + C.reset);
   console.log(C.cyan + "╠" + line() + "╣" + C.reset);
   console.log(C.magenta + "║  📋 COMMANDS                                         ║" + C.reset);
-  console.log(C.white + "║  !help  !ban  !kick  !hanche  !bohanche              ║" + C.reset);
-  console.log(C.white + "║  !nhatu  !phattu  !laudon                            ║" + C.reset);
+  console.log(C.white + "║  /help  !ban  !kick  !hanche  !bohanche              ║" + C.reset);
+  console.log(C.white + "║  /nhatu  !phattu  !laudon                            ║" + C.reset);
   console.log(C.white + "║  /xoa  /themrole  /xoarole  /autorole               ║" + C.reset);
   console.log(C.cyan + "╚" + line() + "╝" + C.reset);
   console.log("");
@@ -86,7 +86,16 @@ for (const name of ["xoa", "themrole", "xoarole", "autorole", "help", "nhatu", "
   client.commands.set(name, require(path.join(__dirname, "commands", name + ".js")));
 }
 
-client.once("clientReady", async () => {\n  showStartup(client);\n  for (const guild of client.guilds.cache.values()) {\n    try {\n      await client.commands.get("counter")?.updateCounter(guild, config);\n    } catch (error) {\n      console.error(C.red + "Counter startup error:" + C.reset, error);\n    }\n  }\n});
+client.once("clientReady", async () => {
+  showStartup(client);
+  for (const guild of client.guilds.cache.values()) {
+    try {
+      await client.commands.get("counter")?.updateCounter(guild, config);
+    } catch (error) {
+      console.error(C.red + "Counter startup error:" + C.reset, error);
+    }
+  }
+});
 
 client.on("guildCreate", guild => {
   logInfo("➕", "Bot đã vào server: " + guild.name, C.green);
@@ -165,10 +174,10 @@ function getHelpText() {
     "`!xoa` là slash command: `/xoa [so_luong]`",
     "",
     "**⛓️ Nhà tù**",
-    "`!nhatu role @role #kenh 3` → chọn role nhà tù, kênh và số lần cần !laudon.",
-    "`!nhatu tao #kenh 3` → bot tự tạo role nhà tù.",
-    "`!nhatu info` → xem cấu hình.",
-    "`!phattu @user [lý do]` → tống thành viên vào nhà tù.",
+    "`/nhatu setup [role] [kenh] [so_lan]` → cấu hình nhà tù.",
+    "`/nhatu info` → xem cấu hình nhà tù.",
+    "`!phattu @user [số lần lao động] [lý do]` → tống thành viên vào nhà tù.",
+    "`!laudon` → người bị tù dùng để tăng số lần lao động.",
     "`!laudon` → người bị tù dùng để tăng số lần lao động.",
     "",
     "**🎭 Auto Role**",
