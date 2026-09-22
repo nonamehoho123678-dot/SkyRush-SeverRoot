@@ -82,7 +82,7 @@ const config = loadConfig();
 
 client.commands = new Collection();
 
-for (const name of ["xoa", "themrole", "xoarole", "autorole", "help"]) {
+for (const name of ["xoa", "themrole", "xoarole", "autorole", "help", "nhatu"]) {
   client.commands.set(name, require(path.join(__dirname, "commands", name + ".js")));
 }
 
@@ -195,65 +195,51 @@ function parseDuration(input) {
 
 client.on("messageCreate", async message => {
   if (message.author.bot || !message.guild || !message.content.startsWith("!")) return;
-
   const args = message.content.trim().split(/\s+/);
   const command = args.shift().slice(1).toLowerCase();
-
+  if (command === "laudon") {
+    const jail = getJailConfig(message.guild.id); const prisoner = jail.prisoners?.[message.author.id];
+    if (!prisoner) return message.reply("❌ Bạn hiện không ở trong nhà tù.");
+    if (message.channel.id !== jail.channelId) return message.reply("❌ Bạn chỉ có thể dùng `!laudon` trong kênh nhà tù.");
+    prisoner.workCount = Number(prisoner.workCount || 0) + 1;
+    const required = Number(prisoner.requiredEscapes || jail.requiredEscapes || 3);
+    const remaining = Math.max(0, required - prisoner.workCount);
+    if (remaining > 0) { saveConfig(config); return message.reply("⛏️ **Lao động thành công!**\n📊 Tiến độ: **" + prisoner.workCount + "/" + required + "**\n🔓 Còn **" + remaining + "** lần nữa để được thả."); }
+    try {
+      const member = await message.guild.members.fetch(message.author.id); const jailRole = message.guild.roles.cache.get(jail.roleId);
+      if (jailRole && member.roles.cache.has(jailRole.id)) await member.roles.remove(jailRole, "Hoàn thành án tù");
+      const restoreRoles = (prisoner.roles || []).map(id => message.guild.roles.cache.get(id)).filter(role => role && role.editable && role.id !== message.guild.id);
+      if (restoreRoles.length) await member.roles.add(restoreRoles, "Khôi phục role sau khi ra tù");
+      delete jail.prisoners[message.author.id]; saveConfig(config);
+      return message.reply("🎉 **Bạn đã được ra tù!**\n🔓 Đã hoàn thành đủ " + required + " lần lao động và role cũ đã được khôi phục.");
+    } catch (error) { console.error(C.red + "Release error:" + C.reset, error); return message.reply("❌ Không thể xử lý ra tù. Hãy báo quản trị viên."); }
+  }
+  if (command === "phattu") {
+    if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply("❌ Bạn cần quyền Administrator để dùng lệnh này.");
+    const target = message.mentions.members.first(); const required = Number(args[1]);
+    if (!target) return message.reply("❌ Dùng: `!phattu @user [số lần lao động] [lý do]`");
+    if (!Number.isInteger(required) || required < 1 || required > 100) return message.reply("❌ Số lần lao động phải từ **1 đến 100**.");
+    const jail = getJailConfig(message.guild.id); const jailRole = jail.roleId ? message.guild.roles.cache.get(jail.roleId) : null; const jailChannel = jail.channelId ? message.guild.channels.cache.get(jail.channelId) : null;
+    if (!jailRole || !jailChannel) return message.reply("❌ Nhà tù chưa được cấu hình. Dùng `/nhatu setup`.");
+    if (!jailRole.editable || !target.manageable) return message.reply("❌ Bot không thể quản lý role hoặc thành viên này.");
+    const reason = args.slice(2).join(" ") || "Không có lý do";
+    const oldRoles = target.roles.cache.filter(role => role.id !== message.guild.id && role.editable && role.id !== jailRole.id).map(role => role.id);
+    try {
+      await target.roles.remove(oldRoles, "Tống vào nhà tù: " + reason); await target.roles.add(jailRole, "Tống vào nhà tù: " + reason);
+      jail.prisoners ||= {}; jail.prisoners[target.id] = { roles: oldRoles, workCount: 0, requiredEscapes: required, jailedAt: Date.now(), reason }; saveConfig(config);
+      return message.reply("⛓️ **Đã tống " + target.user.tag + " vào nhà tù!**\n🔒 Kênh: " + jailChannel + "\n⛏️ Cách ra tù: dùng `!laudon` **" + required + " lần**.\n📊 Tiến độ: **0/" + required + "**\n📝 Lý do: " + reason);
+    } catch (error) { console.error(C.red + "Jail error:" + C.reset, error); return message.reply("❌ Không thể tống tù. Kiểm tra quyền Manage Roles và thứ tự role."); }
+  }
   if (!["ban", "kick", "hanche", "bohanche"].includes(command)) return;
-
-  if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
-    return message.reply("❌ Bạn cần quyền Administrator để dùng lệnh này.");
-  }
-
-  const target = message.mentions.members.first();
-  if (!target) return message.reply("❌ Hãy mention thành viên.");
-
+  if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply("❌ Bạn cần quyền Administrator để dùng lệnh này.");
+  const target = message.mentions.members.first(); if (!target) return message.reply("❌ Hãy mention thành viên.");
   try {
-    if (command === "ban") {
-      const reason = args.slice(1).join(" ") || "Không có lý do";
-      if (!target.bannable) return message.reply("❌ Bot không thể ban thành viên này.");
-      await target.ban({ reason });
-      logInfo("🔨", "BAN → " + target.user.tag + " | " + reason, C.red);
-      return message.reply("🔨 Đã ban " + target.user.tag + ". Lý do: " + reason);
-    }
-
-    if (command === "kick") {
-      const reason = args.slice(1).join(" ") || "Không có lý do";
-      if (!target.kickable) return message.reply("❌ Bot không thể kick thành viên này.");
-      await target.kick(reason);
-      logInfo("👢", "KICK → " + target.user.tag + " | " + reason, C.yellow);
-      return message.reply("👢 Đã kick " + target.user.tag + ". Lý do: " + reason);
-    }
-
-    if (command === "hanche") {
-      const duration = parseDuration(args[1]);
-      if (!duration) {
-        return message.reply("❌ Thời gian phải dạng 10s, 5m, 2h hoặc 1d (tối đa 28d).");
-      }
-
-      const reason = args.slice(2).join(" ") || "Không có lý do";
-      if (!target.moderatable) return message.reply("❌ Bot không thể hạn chế thành viên này.");
-
-      await target.timeout(duration, reason);
-      logInfo("🔇", "TIMEOUT → " + target.user.tag + " | " + args[1], C.yellow);
-      return message.reply(
-        "🔇 Đã hạn chế " + target.user.tag + " trong " + args[1] + ". Lý do: " + reason
-      );
-    }
-
-    if (command === "bohanche") {
-      if (!target.moderatable) return message.reply("❌ Bot không thể bỏ hạn chế thành viên này.");
-
-      await target.timeout(null, "Bỏ hạn chế bởi SkyRush-SeverRoot");
-      logInfo("🔊", "UNTOIMEOUT → " + target.user.tag, C.green);
-      return message.reply("🔊 Đã bỏ hạn chế " + target.user.tag + ".");
-    }
-  } catch (error) {
-    console.error(C.red + "Command error:" + C.reset, error);
-    return message.reply("❌ Không thể thực hiện lệnh. Kiểm tra quyền của bot và thứ tự role.");
-  }
+    if (command === "ban") { const reason = args.slice(1).join(" ") || "Không có lý do"; if (!target.bannable) return message.reply("❌ Bot không thể ban thành viên này."); await target.ban({ reason }); return message.reply("🔨 Đã ban " + target.user.tag + ". Lý do: " + reason); }
+    if (command === "kick") { const reason = args.slice(1).join(" ") || "Không có lý do"; if (!target.kickable) return message.reply("❌ Bot không thể kick thành viên này."); await target.kick(reason); return message.reply("👢 Đã kick " + target.user.tag + ". Lý do: " + reason); }
+    if (command === "hanche") { const duration = parseDuration(args[1]); if (!duration) return message.reply("❌ Thời gian phải dạng 10s, 5m, 2h hoặc 1d (tối đa 28d)."); const reason = args.slice(2).join(" ") || "Không có lý do"; if (!target.moderatable) return message.reply("❌ Bot không thể hạn chế thành viên này."); await target.timeout(duration, reason); return message.reply("🔇 Đã hạn chế " + target.user.tag + " trong " + args[1] + ". Lý do: " + reason); }
+    if (command === "bohanche") { if (!target.moderatable) return message.reply("❌ Bot không thể bỏ hạn chế thành viên này."); await target.timeout(null, "Bỏ hạn chế bởi SkyRush-SeverRoot"); return message.reply("🔊 Đã bỏ hạn chế " + target.user.tag + "."); }
+  } catch (error) { console.error(C.red + "Command error:" + C.reset, error); return message.reply("❌ Không thể thực hiện lệnh. Kiểm tra quyền của bot và thứ tự role."); }
 });
-
 client.on("interactionCreate", async interaction => {
   if (interaction.isChatInputCommand()) {
     const command = client.commands.get(interaction.commandName);
