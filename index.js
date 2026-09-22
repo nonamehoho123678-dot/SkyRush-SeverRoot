@@ -256,12 +256,19 @@ client.on("interactionCreate", async interaction => {
     if (!command) return;
 
     try {
+      await interaction.deferReply({ flags: 64 });
       await command.execute(interaction, { config, saveConfig });
       logInfo("⚡", "SLASH → /" + interaction.commandName + " | " + interaction.user.tag, C.blue);
     } catch (error) {
       console.error(C.red + "Interaction error:" + C.reset, error);
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({ content: "❌ Có lỗi xảy ra.", ephemeral: true });
+      try {
+        if (interaction.deferred) {
+          await interaction.editReply({ content: "❌ Có lỗi xảy ra." });
+        } else if (!interaction.replied) {
+          await interaction.reply({ content: "❌ Có lỗi xảy ra.", flags: 64 });
+        }
+      } catch (replyError) {
+        console.error(C.red + "Interaction reply error:" + C.reset, replyError);
       }
     }
     return;
