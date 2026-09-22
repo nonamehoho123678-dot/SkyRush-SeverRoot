@@ -4,7 +4,7 @@ Bot Discord quản trị server, Auto Role và Nhà tù.
 
 ## Lệnh Prefix
 
-!help
+/help
 !ban @user [lý do]
 !kick @user [lý do]
 !hanche @user [thời gian] [lý do]
