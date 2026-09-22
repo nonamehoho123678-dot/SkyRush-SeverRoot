@@ -7,7 +7,8 @@ const commands = [
   require("./commands/xoarole").data,
   require("./commands/autorole").data,
   require("./commands/help").data,
-  require("./commands/nhatu").data,\n  require("./commands/counter").data
+  require("./commands/nhatu").data,
+  require("./commands/counter").data
 ];
 
 if (!process.env.DISCORD_TOKEN || !process.env.CLIENT_ID) {
