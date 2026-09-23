@@ -178,7 +178,7 @@ function getHelpText() {
     "`/nhatu info` → xem cấu hình nhà tù.",
     "`!phattu @user [số lần lao động] [lý do]` → tống thành viên vào nhà tù.",
     "`!laudon` → người bị tù dùng để tăng số lần lao động.",
-    "`!laudon` → người bị tù dùng để tăng số lần lao động.",
+    "`!thatu @user` → quản trị viên thả tù ngay và khôi phục role cũ.",
     "",
     "**🎭 Auto Role**",
     "`/autorole` → mở bảng điều khiển Auto Role.",
@@ -224,6 +224,44 @@ client.on("messageCreate", async message => {
       return message.reply("🎉 **Bạn đã được ra tù!**\n🔓 Đã hoàn thành đủ " + required + " lần lao động và role cũ đã được khôi phục.");
     } catch (error) { console.error(C.red + "Release error:" + C.reset, error); return message.reply("❌ Không thể xử lý ra tù. Hãy báo quản trị viên."); }
   }
+  if (command === "thatu") {
+    if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply("❌ Bạn cần quyền Administrator để dùng lệnh này.");
+
+    const target = message.mentions.members.first();
+    if (!target) return message.reply("❌ Dùng: `!thatu @user`");
+
+    const jail = getJailConfig(message.guild.id);
+    const prisoner = jail.prisoners?.[target.id];
+    if (!prisoner) return message.reply("❌ Thành viên này hiện không ở trong nhà tù.");
+
+    const jailRole = jail.roleId ? message.guild.roles.cache.get(jail.roleId) : null;
+
+    try {
+      if (jailRole && target.roles.cache.has(jailRole.id)) {
+        await target.roles.remove(jailRole, "Thả tù bởi quản trị viên");
+      }
+
+      const restoreRoles = (prisoner.roles || [])
+        .map(id => message.guild.roles.cache.get(id))
+        .filter(role => role && role.editable && role.id !== message.guild.id && role.id !== jailRole?.id);
+
+      if (restoreRoles.length) {
+        await target.roles.add(restoreRoles, "Khôi phục role sau khi được thả tù");
+      }
+
+      delete jail.prisoners[target.id];
+      saveConfig(config);
+
+      return message.reply(
+        "🔓 **Đã thả tù " + target.user.tag + "!**\\n" +
+        "🎭 Đã khôi phục các role trước khi bị tù."
+      );
+    } catch (error) {
+      console.error(C.red + "Manual release error:" + C.reset, error);
+      return message.reply("❌ Không thể thả tù. Kiểm tra quyền Manage Roles và thứ tự role của bot.");
+    }
+  }
+
   if (command === "phattu") {
     if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply("❌ Bạn cần quyền Administrator để dùng lệnh này.");
     const target = message.mentions.members.first(); const required = Number(args[1]);
