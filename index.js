@@ -58,7 +58,7 @@ function showStartup(c) {
   console.log(C.cyan + "╠" + line() + "╣" + C.reset);
   console.log(C.magenta + "║  📋 COMMANDS                                         ║" + C.reset);
   console.log(C.white + "║  /help  !ban  !kick  !hanche  !bohanche              ║" + C.reset);
-  console.log(C.white + "║  /nhatu  !phattu  !laudon                            ║" + C.reset);
+  console.log(C.white + "║  /nhatu  !phattu  !laudon  !thatu                    ║" + C.reset);
   console.log(C.white + "║  /xoa  /themrole  /xoarole  /autorole               ║" + C.reset);
   console.log(C.cyan + "╚" + line() + "╝" + C.reset);
   console.log("");
